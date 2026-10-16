@@ -1,0 +1,23 @@
+<!-- ======================================================================
+     Paste this where the configurator should appear on your site.
+     1. Upload the web/ folder to your site, e.g. /configurator/
+     2. Replace YOUR_DEPLOYMENT_ID with the Apps Script web app URL
+     3. Test with ?cfg-debug=1 on the end of the page URL
+     ====================================================================== -->
+<link rel="stylesheet" href="/configurator/configurator.css">
+
+<div id="door-configurator"></div>
+
+<script src="/configurator/configurator.js"></script>
+<script>
+  Configurator.mount('#door-configurator', {
+    source: 'script',
+    url: 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec',
+
+    // Optional:
+    // debug: true,           // show the admin problem list (or add ?cfg-debug=1 to the URL)
+    // showHeader: false,     // hide the logo/heading if your page has its own
+    // assetBase: 'https://cdn.example.com/door-layers/',   // where relative image paths load from
+    // onQuote: function (q) { /* analytics, e.g. gtag('event', 'quote_request', { id: q.quoteId }) */ }
+  });
+</script>

@@ -1,0 +1,421 @@
+/* ==========================================================================
+   Configurator styles
+   --------------------------------------------------------------------------
+   HOW TO REBRAND
+   1. Edit the tokens in section 1 only. Everything else reads from them.
+   2. Accent color is set from the sheet (Settings > Accent color) and
+      overrides --cfg-accent at runtime. To lock it in CSS instead, add
+      `!important` to --cfg-accent below or clear the setting in the sheet.
+   3. Fonts inherit from your site by default (--cfg-font: inherit).
+
+   SCOPING
+   Every rule starts with `.cfg` so nothing leaks into your site, and your
+   site's styles are reset where they would otherwise break the layout
+   (see section 2). Class names follow a BEM pattern:
+     .cfg-block, .cfg-block__element, .cfg-block--modifier, .is-state
+
+   LAYOUT
+   Uses container queries, so the layout responds to the width of the box
+   it is embedded in, not the browser window. Breakpoint: 760px.
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. THEME TOKENS (edit these)
+   ========================================================================== */
+.cfg {
+  /* Brand */
+  --cfg-accent: #2F5D50;          /* buttons, selected states, focus ring. Overridden by the sheet */
+  --cfg-on-accent: #ffffff;       /* text on accent backgrounds. Auto-set from the accent's brightness */
+
+  /* Neutrals */
+  --cfg-bg: #ffffff;              /* panel and card background */
+  --cfg-surface: #f6f7f6;         /* preview backdrop, summary box, hover */
+  --cfg-border: #dadfdd;          /* default borders */
+  --cfg-border-strong: #b7c0bd;   /* hover borders */
+  --cfg-text: #1b1f20;            /* main text */
+  --cfg-muted: #5f6b6e;           /* help text, labels, captions */
+
+  /* Status colors */
+  --cfg-warn-bg: #fff6dc;         /* notices (option changed), low-stock badge */
+  --cfg-warn-text: #7a5300;
+  --cfg-error: #b3261e;           /* field errors */
+  --cfg-ok: #1e7a4c;
+
+  /* Type */
+  --cfg-font: inherit;            /* set to e.g. "Inter", sans-serif to override your site's font */
+  --cfg-size: 15px;               /* base text size; everything below scales from it */
+  --cfg-size-sm: 0.86em;
+  --cfg-size-title: 1.6em;        /* configurator heading */
+  --cfg-weight-strong: 600;
+
+  /* Shape and spacing */
+  --cfg-radius: 10px;             /* cards, inputs, buttons */
+  --cfg-radius-pill: 999px;       /* segmented control, badges */
+  --cfg-gap: 16px;                /* base spacing unit */
+  --cfg-swatch-size: 40px;        /* color swatch circles */
+  --cfg-max-width: 1180px;        /* widest the whole configurator gets */
+  --cfg-preview-ratio: 1 / 2;     /* width / height of the preview; match your layer images (400x800 = 1/2) */
+  --cfg-sticky-top: 16px;         /* preview sticks this far from the top on wide layouts; raise if your site has a sticky header */
+
+  /* Motion */
+  --cfg-speed: 160ms;
+}
+
+
+/* ==========================================================================
+   2. BASE (scoped reset so the host site's CSS does not break things)
+   ========================================================================== */
+.cfg {
+  container-type: inline-size;
+  container-name: cfg;
+  max-width: var(--cfg-max-width);
+  margin: 0 auto;
+  font-family: var(--cfg-font);
+  font-size: var(--cfg-size);
+  line-height: 1.45;
+  color: var(--cfg-text);
+  -webkit-font-smoothing: antialiased;
+}
+.cfg *, .cfg *::before, .cfg *::after { box-sizing: border-box; }
+/* :where() keeps these resets at zero specificity, so any .cfg-* rule below wins */
+:where(.cfg) fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+:where(.cfg) legend { padding: 0; }
+:where(.cfg) :is(h2, h3, p, dl, dd, ul, ol) { margin: 0; }
+:where(.cfg) :is(button, input, select, textarea) { font: inherit; color: inherit; }
+:where(.cfg) img { max-width: 100%; }
+.cfg [hidden] { display: none !important; }
+
+/* Visible keyboard focus everywhere, invisible for mouse clicks */
+.cfg :focus { outline: none; }
+.cfg :focus-visible,
+.cfg .cfg-option:has(input:focus-visible),
+.cfg .cfg-segment__item:has(input:focus-visible) {
+  outline: 2px solid var(--cfg-accent);
+  outline-offset: 2px;
+}
+
+
+/* ==========================================================================
+   3. HEADER and LAYOUT
+   ========================================================================== */
+.cfg-header { margin-bottom: calc(var(--cfg-gap) * 1.25); }
+.cfg-header__logo { display: block; max-height: 44px; width: auto; margin-bottom: 10px; }
+.cfg-header__title { font-size: var(--cfg-size-title); font-weight: var(--cfg-weight-strong); line-height: 1.2; letter-spacing: -0.01em; }
+
+/* Narrow: preview on top, panel below */
+.cfg-layout { display: grid; gap: calc(var(--cfg-gap) * 1.5); }
+
+/* Wide: preview left (sticky), panel right */
+@container cfg (min-width: 760px) {
+  .cfg-layout { grid-template-columns: minmax(0, 1fr) minmax(340px, 440px); align-items: start; gap: calc(var(--cfg-gap) * 2.5); }
+  .cfg-preview__inner { position: sticky; top: var(--cfg-sticky-top); }
+}
+
+.cfg-panel { display: grid; gap: calc(var(--cfg-gap) * 1.5); min-width: 0; }
+.cfg-product-desc { color: var(--cfg-muted); }
+
+
+/* ==========================================================================
+   4. PREVIEW (stacked image layers)
+   ========================================================================== */
+.cfg-preview__inner {
+  background: var(--cfg-surface);
+  border-radius: var(--cfg-radius);
+  padding: var(--cfg-gap);
+}
+.cfg-stage {
+  position: relative;
+  width: 100%;
+  max-width: 360px;               /* keeps tall doors from getting huge on wide screens */
+  margin: 0 auto;
+  aspect-ratio: var(--cfg-preview-ratio);
+  transition: transform calc(var(--cfg-speed) * 2) ease;
+}
+/* Narrow screens: shorter preview so the options stay in view */
+@container cfg (max-width: 759px) {
+  .cfg-stage { max-width: 150px; }
+  .cfg-preview__inner { padding: 10px; }
+}
+.cfg-stage.is-mirrored { transform: scaleX(-1); }   /* set by options with "Mirror preview" = Yes */
+.cfg-stage__empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--cfg-muted); font-size: var(--cfg-size-sm); }
+
+.cfg-layer { position: absolute; inset: 0; }
+.cfg-layer img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; user-select: none; }
+.cfg-layer.is-broken { display: none; }            /* a missing image is hidden for customers; debug mode lists it */
+
+/* Tinted layers: color fill clipped to the image shape, image multiplied on top.
+   Mask images must come from the same site or a host that sends CORS headers. */
+.cfg-layer--tinted { isolation: isolate; }
+.cfg-layer__tint {
+  position: absolute; inset: 0;
+  background: var(--cfg-tint);
+  -webkit-mask: var(--cfg-mask) center / contain no-repeat;
+          mask: var(--cfg-mask) center / contain no-repeat;
+}
+.cfg-layer--tinted img { mix-blend-mode: multiply; }
+
+.cfg-preview__caption {
+  margin-top: 10px;
+  text-align: center;
+  font-size: var(--cfg-size-sm);
+  color: var(--cfg-muted);
+}
+
+
+/* ==========================================================================
+   5. STEPS and OPTIONS
+   ========================================================================== */
+.cfg-steps { display: grid; gap: calc(var(--cfg-gap) * 1.5); }
+
+.cfg-step__title {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px;
+  font-weight: var(--cfg-weight-strong);
+  margin-bottom: 8px;
+}
+.cfg-step__value { font-weight: 400; color: var(--cfg-muted); }  /* current pick, next to the step name */
+.cfg-step__help { color: var(--cfg-muted); font-size: var(--cfg-size-sm); margin: -4px 0 10px; }
+.cfg-step__unavailable { color: var(--cfg-muted); font-size: var(--cfg-size-sm); margin-top: 8px; }
+.cfg-step__detail { color: var(--cfg-muted); font-size: var(--cfg-size-sm); margin-top: 8px; }
+
+/* Option groups */
+.cfg-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.cfg-options--cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.cfg-options--swatches { gap: 10px 6px; }
+
+/* A single option. The real radio input is visually hidden but still
+   receives focus and clicks, so keyboard and screen readers work. */
+.cfg-option {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 9px 14px;
+  min-height: 44px;                                  /* touch target */
+  background: var(--cfg-bg);
+  border: 1px solid var(--cfg-border);
+  border-radius: var(--cfg-radius);
+  cursor: pointer;
+  transition: border-color var(--cfg-speed), box-shadow var(--cfg-speed), background var(--cfg-speed);
+}
+.cfg-option:hover { border-color: var(--cfg-border-strong); }
+.cfg-option input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.cfg-option.is-selected { border-color: var(--cfg-accent); box-shadow: inset 0 0 0 1px var(--cfg-accent); }
+.cfg-option.is-unavailable { cursor: not-allowed; opacity: .55; background: var(--cfg-surface); }
+.cfg-option.is-unavailable .cfg-option__name { text-decoration: line-through; }
+
+.cfg-option__text { display: flex; flex-direction: column; line-height: 1.25; }
+.cfg-option__name { font-weight: 500; }
+.cfg-option__price { font-size: var(--cfg-size-sm); color: var(--cfg-muted); }
+.cfg-option__note { font-size: var(--cfg-size-sm); color: var(--cfg-muted); max-width: 22ch; }   /* reason it is unavailable */
+.cfg-option__desc { font-size: var(--cfg-size-sm); color: var(--cfg-muted); }
+
+/* Product cards */
+.cfg-option--card { flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px 14px; }
+
+/* Swatch options: circle on top, label under */
+.cfg-option--swatch {
+  flex-direction: column; gap: 6px;
+  width: 84px; padding: 8px 4px;
+  border-color: transparent; background: transparent;
+  text-align: center;
+}
+.cfg-option--swatch .cfg-option__text { align-items: center; }
+.cfg-option--swatch.is-selected { border-color: transparent; box-shadow: none; }
+.cfg-option--swatch.is-unavailable { background: transparent; }
+.cfg-swatch {
+  width: var(--cfg-swatch-size); height: var(--cfg-swatch-size);
+  border-radius: 50%;
+  background: var(--cfg-surface) center / cover;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .14);
+  transition: box-shadow var(--cfg-speed);
+}
+.cfg-option--swatch.is-selected .cfg-swatch { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .14), 0 0 0 2px var(--cfg-bg), 0 0 0 4px var(--cfg-accent); }
+.cfg-swatch--none { background: linear-gradient(135deg, transparent 47%, var(--cfg-border-strong) 47%, var(--cfg-border-strong) 53%, transparent 53%), var(--cfg-bg); }
+
+/* Badges (Low stock, Backorder, lead times) */
+.cfg-badge {
+  display: inline-block; margin-top: 3px;
+  padding: 1px 8px;
+  font-size: 0.78em; font-weight: 500;
+  color: var(--cfg-warn-text); background: var(--cfg-warn-bg);
+  border-radius: var(--cfg-radius-pill);
+  white-space: nowrap;
+}
+
+/* Dropdown steps */
+.cfg-select-wrap { position: relative; }
+.cfg-select-wrap::after {                            /* chevron */
+  content: ""; position: absolute; right: 14px; top: 50%;
+  width: 8px; height: 8px; margin-top: -6px;
+  border-right: 2px solid var(--cfg-muted); border-bottom: 2px solid var(--cfg-muted);
+  transform: rotate(45deg); pointer-events: none;
+}
+.cfg-select { appearance: none; padding-right: 40px; }
+
+/* Standard / Custom size toggle */
+.cfg-segment {
+  display: inline-flex; padding: 3px; margin-bottom: 10px;
+  background: var(--cfg-surface); border: 1px solid var(--cfg-border);
+  border-radius: var(--cfg-radius-pill);
+}
+.cfg-segment__item { position: relative; padding: 6px 16px; border-radius: var(--cfg-radius-pill); cursor: pointer; font-size: var(--cfg-size-sm); font-weight: 500; }
+.cfg-segment__item input { position: absolute; opacity: 0; pointer-events: none; }
+.cfg-segment__item.is-selected { background: var(--cfg-bg); box-shadow: 0 1px 2px rgba(0, 0, 0, .12); }
+.cfg-custom { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+
+/* ==========================================================================
+   6. FORM FIELDS (custom size inputs, dropdowns, quote form)
+   ========================================================================== */
+.cfg-field { display: grid; gap: 4px; align-content: start; }
+.cfg-field__label { font-size: var(--cfg-size-sm); font-weight: 500; }
+.cfg-field__opt { color: var(--cfg-muted); font-weight: 400; }
+.cfg-field__hint { font-size: 0.8em; color: var(--cfg-muted); }
+.cfg-field__error { font-size: var(--cfg-size-sm); color: var(--cfg-error); }
+.cfg-input, .cfg-select {
+  width: 100%; min-height: 44px;
+  padding: 10px 12px;
+  background: var(--cfg-bg);
+  border: 1px solid var(--cfg-border);
+  border-radius: var(--cfg-radius);
+  transition: border-color var(--cfg-speed), box-shadow var(--cfg-speed);
+}
+.cfg-input:hover, .cfg-select:hover { border-color: var(--cfg-border-strong); }
+.cfg-input:focus-visible, .cfg-select:focus-visible { outline: none; border-color: var(--cfg-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cfg-accent) 22%, transparent); }
+.cfg-input.is-invalid { border-color: var(--cfg-error); }
+textarea.cfg-input { resize: vertical; min-height: 84px; }
+
+
+/* ==========================================================================
+   7. BUTTONS
+   ========================================================================== */
+.cfg-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 46px; padding: 10px 20px;
+  font-weight: var(--cfg-weight-strong);
+  border: 1px solid transparent;
+  border-radius: var(--cfg-radius);
+  cursor: pointer;
+  transition: filter var(--cfg-speed), background var(--cfg-speed);
+}
+.cfg-btn--primary { background: var(--cfg-accent); color: var(--cfg-on-accent); }
+.cfg-btn--primary:hover:not(:disabled) { filter: brightness(1.08); }
+.cfg-btn--secondary { background: var(--cfg-bg); border-color: var(--cfg-border-strong); }
+.cfg-btn--secondary:hover { background: var(--cfg-surface); }
+.cfg-btn--block { width: 100%; }
+.cfg-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+
+/* ==========================================================================
+   8. SUMMARY and PRICE
+   ========================================================================== */
+.cfg-summary {
+  display: grid; gap: 14px;
+  padding: calc(var(--cfg-gap) * 1.25);
+  background: var(--cfg-surface);
+  border-radius: var(--cfg-radius);
+  scroll-margin-top: var(--cfg-sticky-top);
+}
+.cfg-section-title { font-size: 1.1em; font-weight: var(--cfg-weight-strong); }
+.cfg-summary__list { display: grid; gap: 6px; }
+.cfg-summary__row { display: grid; grid-template-columns: minmax(90px, 40%) 1fr; gap: 12px; font-size: var(--cfg-size-sm); }
+.cfg-summary__row dt { color: var(--cfg-muted); }
+.cfg-summary__lead { color: var(--cfg-muted); }
+.cfg-summary__missing { font-size: var(--cfg-size-sm); color: var(--cfg-warn-text); }
+
+.cfg-price { display: flex; justify-content: space-between; align-items: baseline; padding-top: 12px; border-top: 1px solid var(--cfg-border); }
+.cfg-price__label { font-weight: 500; }
+.cfg-price__total { font-size: 1.6em; font-weight: var(--cfg-weight-strong); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.cfg-price__note { font-size: 0.8em; color: var(--cfg-muted); }
+
+.cfg-breakdown summary { cursor: pointer; font-size: var(--cfg-size-sm); color: var(--cfg-muted); }
+.cfg-breakdown__table { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: var(--cfg-size-sm); }
+.cfg-breakdown__table td { padding: 3px 0; vertical-align: top; }
+.cfg-breakdown__table td:last-child { text-align: right; white-space: nowrap; padding-left: 12px; font-variant-numeric: tabular-nums; }
+
+
+/* ==========================================================================
+   9. QUOTE FORM
+   ========================================================================== */
+.cfg-quote { display: grid; gap: 14px; scroll-margin-top: var(--cfg-sticky-top); }
+.cfg-quote__form { display: grid; gap: 12px; }
+.cfg-quote__grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+@container cfg (min-width: 480px) { .cfg-quote__grid { grid-template-columns: 1fr 1fr; } }
+.cfg-quote__status { font-size: var(--cfg-size-sm); color: var(--cfg-error); }
+.cfg-quote__status:empty { display: none; }
+.cfg-quote__done { display: grid; gap: 10px; padding: var(--cfg-gap); border: 1px solid var(--cfg-ok); border-radius: var(--cfg-radius); }
+.cfg-quote__thanks { font-weight: var(--cfg-weight-strong); color: var(--cfg-ok); }
+.cfg-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }   /* spam trap, keep hidden */
+
+
+/* ==========================================================================
+   10. MESSAGES: notices, loading, unavailable
+   ========================================================================== */
+/* "Finish changed from X to Y" messages */
+.cfg-notice {
+  position: relative;
+  padding: 12px 40px 12px 14px;
+  font-size: var(--cfg-size-sm);
+  color: var(--cfg-warn-text); background: var(--cfg-warn-bg);
+  border-radius: var(--cfg-radius);
+}
+.cfg-notice ul { padding-left: 18px; }
+.cfg-notice__close { position: absolute; top: 6px; right: 8px; width: 28px; height: 28px; background: none; border: 0; font-size: 20px; line-height: 1; cursor: pointer; color: inherit; }
+
+.cfg-loading { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 240px; color: var(--cfg-muted); }
+.cfg-spinner { width: 18px; height: 18px; border: 2px solid var(--cfg-border); border-top-color: var(--cfg-accent); border-radius: 50%; animation: cfg-spin .8s linear infinite; }
+@keyframes cfg-spin { to { transform: rotate(360deg); } }
+
+.cfg-unavailable { display: grid; gap: 8px; justify-items: start; padding: calc(var(--cfg-gap) * 1.5); background: var(--cfg-surface); border-radius: var(--cfg-radius); }
+.cfg-unavailable__title { font-weight: var(--cfg-weight-strong); }
+
+
+/* ==========================================================================
+   11. ADMIN PANEL (debug mode only: ?cfg-debug=1 or debug: true)
+   Customers never see this.
+   ========================================================================== */
+.cfg-admin {
+  margin-bottom: var(--cfg-gap);
+  font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: #1f2426; color: #e6e9ea;
+  border-radius: var(--cfg-radius);
+}
+.cfg-admin summary { padding: 10px 14px; cursor: pointer; font-weight: 600; }
+.cfg-admin__src { font-weight: 400; color: #9aa6a9; margin-left: 8px; }
+.cfg-admin__list { list-style: none; padding: 0 14px 14px; display: grid; gap: 8px; }
+.cfg-admin__item { display: grid; gap: 2px; padding: 8px 10px; border-left: 3px solid #c9a227; background: #2a3033; border-radius: 4px; }
+.cfg-admin__item--fatal { border-color: #ff6b5e; }
+.cfg-admin__item--error { border-color: #ff9f43; }
+.cfg-admin__level { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #9aa6a9; }
+.cfg-admin__where { color: #8fd3c1; }
+.cfg-admin__fix { color: #c7cfd1; }
+.cfg-admin__ok { padding: 0 14px 14px; color: #8fd3c1; }
+.cfg-admin-inline { color: var(--cfg-muted); }
+
+
+/* ==========================================================================
+   12. MOBILE PRICE BAR (narrow layouts only)
+   Sticks to the bottom of the screen while the configurator is in view.
+   Set display:none here if your site already has a sticky footer.
+   ========================================================================== */
+.cfg-bar { display: none; }
+@container cfg (max-width: 759px) {
+  .cfg-bar {
+    position: sticky; bottom: 0; z-index: 5;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin-top: var(--cfg-gap);
+    padding: 10px 14px;
+    background: var(--cfg-bg);
+    border-top: 1px solid var(--cfg-border);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, .06);
+  }
+  .cfg-bar__price { font-weight: var(--cfg-weight-strong); font-size: 1.15em; font-variant-numeric: tabular-nums; }
+  .cfg-bar .cfg-btn { min-height: 40px; padding: 8px 16px; }
+}
+
+
+/* ==========================================================================
+   13. REDUCED MOTION
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .cfg *, .cfg *::before, .cfg *::after { transition: none !important; animation: none !important; }
+}
