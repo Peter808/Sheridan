@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configurator demo</title>
+  <link rel="stylesheet" href="configurator.css">
+  <style>
+    /* Stand-in for your site's page styles */
+    body { margin: 0; padding: 32px 16px 0; background: #fff; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  </style>
+</head>
+<body>
+  <!-- Demo mode: built-in placeholder data, no sheet needed. Debug panel on. -->
+  <div id="door-configurator"></div>
+  <script src="configurator.js"></script>
+  <script>
+    Configurator.mount('#door-configurator', { source: 'demo', debug: true });
+  </script>
+</body>
+</html>
